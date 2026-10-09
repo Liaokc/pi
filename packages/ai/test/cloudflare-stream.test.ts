@@ -75,6 +75,7 @@ describe("Cloudflare provider streams", () => {
 		expect(captured).toBe(model.baseUrl);
 	});
 
+	// Regression test for https://github.com/earendil-works/pi/issues/10539
 	it("moves the gateway credential onto Authorization for REST API models", () => {
 		const captured: Array<Record<string, string | null> | undefined> = [];
 		const streams = cloudflareStreams({
@@ -97,6 +98,7 @@ describe("Cloudflare provider streams", () => {
 		]);
 	});
 
+	// Regression test for https://github.com/earendil-works/pi/issues/10539
 	it("keeps the gateway credential header for passthrough models", () => {
 		let captured: Record<string, string | null> | undefined;
 		const streams = cloudflareStreams({
@@ -115,6 +117,7 @@ describe("Cloudflare provider streams", () => {
 		expect(captured).toEqual({ ...gatewayAuthHeaders });
 	});
 
+	// Regression test for https://github.com/earendil-works/pi/issues/10539
 	it("leaves REST API requests untouched without a gateway credential header", () => {
 		let captured: Record<string, string | null> | undefined;
 		const streams = cloudflareStreams({
