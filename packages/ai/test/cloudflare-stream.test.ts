@@ -19,6 +19,17 @@ const model: Model<Api> = {
 
 const context = normalizeContext({ messages: [] });
 
+const restModel: Model<Api> = {
+	...model,
+	baseUrl: "https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1",
+};
+
+const gatewayAuthHeaders = {
+	"cf-aig-authorization": "Bearer cf-token",
+	Authorization: null,
+	"x-api-key": null,
+} as const;
+
 describe("Cloudflare provider streams", () => {
 	it("materializes the model endpoint before dispatch", () => {
 		const captured: string[] = [];
@@ -62,5 +73,63 @@ describe("Cloudflare provider streams", () => {
 		streams.streamSimple(model, context, {});
 
 		expect(captured).toBe(model.baseUrl);
+	});
+
+	it("moves the gateway credential onto Authorization for REST API models", () => {
+		const captured: Array<Record<string, string | null> | undefined> = [];
+		const streams = cloudflareStreams({
+			stream: (_requestModel, _context, options) => {
+				captured.push(options?.headers);
+				return new AssistantMessageEventStream();
+			},
+			streamSimple: (_requestModel, _context, options) => {
+				captured.push(options?.headers);
+				return new AssistantMessageEventStream();
+			},
+		});
+
+		streams.stream(restModel, context, { headers: { ...gatewayAuthHeaders } });
+		streams.streamSimple(restModel, context, { headers: { ...gatewayAuthHeaders } });
+
+		expect(captured).toEqual([
+			{ "x-api-key": null, Authorization: "Bearer cf-token" },
+			{ "x-api-key": null, Authorization: "Bearer cf-token" },
+		]);
+	});
+
+	it("keeps the gateway credential header for passthrough models", () => {
+		let captured: Record<string, string | null> | undefined;
+		const streams = cloudflareStreams({
+			stream: (_requestModel, _context, options) => {
+				captured = options?.headers;
+				return new AssistantMessageEventStream();
+			},
+			streamSimple: (_requestModel, _context, options) => {
+				captured = options?.headers;
+				return new AssistantMessageEventStream();
+			},
+		});
+
+		streams.streamSimple(model, context, { headers: { ...gatewayAuthHeaders } });
+
+		expect(captured).toEqual({ ...gatewayAuthHeaders });
+	});
+
+	it("leaves REST API requests untouched without a gateway credential header", () => {
+		let captured: Record<string, string | null> | undefined;
+		const streams = cloudflareStreams({
+			stream: (_requestModel, _context, options) => {
+				captured = options?.headers;
+				return new AssistantMessageEventStream();
+			},
+			streamSimple: (_requestModel, _context, options) => {
+				captured = options?.headers;
+				return new AssistantMessageEventStream();
+			},
+		});
+
+		streams.streamSimple(restModel, context, { headers: { "x-custom": "value" } });
+
+		expect(captured).toEqual({ "x-custom": "value" });
 	});
 });

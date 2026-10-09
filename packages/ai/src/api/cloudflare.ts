@@ -17,3 +17,12 @@ export const CLOUDFLARE_AI_GATEWAY_OPENAI_BASE_URL =
 /** AI Gateway → Anthropic passthrough. */
 export const CLOUDFLARE_AI_GATEWAY_ANTHROPIC_BASE_URL =
 	"https://gateway.ai.cloudflare.com/v1/{CLOUDFLARE_ACCOUNT_ID}/{CLOUDFLARE_GATEWAY_ID}/anthropic";
+
+/**
+ * AI Gateway catalog-aware REST API for third-party models (deepseek, xai, qwen,
+ * moonshotai, ...). Unlike the per-provider passthroughs above, it addresses
+ * models by their `author/model` IDs. Requires a token with Workers AI
+ * permission. https://developers.cloudflare.com/ai-gateway/usage/rest-api/
+ */
+export const CLOUDFLARE_AI_GATEWAY_REST_BASE_URL =
+	"https://api.cloudflare.com/client/v4/accounts/{CLOUDFLARE_ACCOUNT_ID}/ai/v1";

@@ -10,6 +10,7 @@ import {
 	CLOUDFLARE_AI_GATEWAY_ANTHROPIC_BASE_URL,
 	CLOUDFLARE_AI_GATEWAY_COMPAT_BASE_URL,
 	CLOUDFLARE_AI_GATEWAY_OPENAI_BASE_URL,
+	CLOUDFLARE_AI_GATEWAY_REST_BASE_URL,
 	CLOUDFLARE_WORKERS_AI_BASE_URL,
 	CLOUDFLARE_WORKERS_AI_REST_BASE_URL,
 } from "../src/api/cloudflare.ts";
@@ -1931,7 +1932,15 @@ async function loadModelsDevData(): Promise<Model<any>[]> {
 					baseUrl = CLOUDFLARE_AI_GATEWAY_COMPAT_BASE_URL;
 					id = prefixedId;
 				} else {
-					continue;
+					// Upstreams without a dedicated gateway passthrough (deepseek, xai,
+					// alibaba, moonshotai, ...) route over the catalog-aware REST API,
+					// which addresses models by their `author/model` IDs — exactly the
+					// models.dev prefixed IDs. Skipping them here would drop those
+					// models from the catalog entirely.
+					// https://developers.cloudflare.com/ai-gateway/usage/rest-api/
+					api = "openai-completions";
+					baseUrl = CLOUDFLARE_AI_GATEWAY_REST_BASE_URL;
+					id = prefixedId;
 				}
 
 				// Gateway passthroughs forward session affinity headers to upstreams that
